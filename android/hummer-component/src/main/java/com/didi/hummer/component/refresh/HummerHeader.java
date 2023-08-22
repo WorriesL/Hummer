@@ -23,10 +23,16 @@ public class HummerHeader extends SimpleComponent implements RefreshHeader {
 
     private OnRefreshListener mOnRefreshListener;
 
+    private OnMovingListener mOnMovingListener;
+
     public interface OnRefreshListener {
         void onRefreshStarted();
         void onRefreshing();
         void onRefreshFinished();
+    }
+
+    public interface OnMovingListener {
+        void onMoving(boolean isDragging, float percent, int offset, int height, int maxDragHeight);
     }
 
     public HummerHeader(Context context) {
@@ -49,6 +55,16 @@ public class HummerHeader extends SimpleComponent implements RefreshHeader {
 
     public void setOnRefreshListener(OnRefreshListener listener) {
         mOnRefreshListener = listener;
+    }
+
+    public void setOnMovingListener(OnMovingListener listener) {
+        mOnMovingListener = listener;
+    }
+
+    @Override
+    public void onMoving(boolean isDragging, float percent, int offset, int height, int maxDragHeight) {
+        super.onMoving(isDragging, percent, offset, height, maxDragHeight);
+        mOnMovingListener.onMoving(isDragging, percent, offset, height, maxDragHeight);
     }
 
     @Override

@@ -53,6 +53,8 @@ public class Scroller extends HMBase<SmartRefreshLayout> implements HMBase.Posit
     private List<HMBase> children = new ArrayList<>();
     private Map<HMBase, FixedNoneBox> fixedNoneBoxMap = new HashMap<>();
 
+    private int lastHeaderMovingOffsetY = 0;
+
     public Scroller(HummerContext context, JSValue jsValue, String viewID) {
         super(context, jsValue, viewID);
         hummerContext = context;
@@ -157,6 +159,32 @@ public class Scroller extends HMBase<SmartRefreshLayout> implements HMBase.Posit
 
         // 默认隐藏滚动条
         scrollView.setVerticalScrollBarEnabled(false);
+
+        hummerHeader.setOnMovingListener(new HummerHeader.OnMovingListener() {
+            @Override
+            public void onMoving(boolean isDragging, float percent, int offset, int height, int maxDragHeight) {
+                if (!mEventManager.contains(ScrollEvent.HM_EVENT_TYPE_SCROLL)) {
+                    return;
+                }
+
+                if (isDragging) {
+                    int dy = offset - lastHeaderMovingOffsetY;
+                    lastHeaderMovingOffsetY = offset;
+                    scrollEvent.setType(ScrollEvent.HM_EVENT_TYPE_SCROLL);
+                    scrollEvent.setState(ScrollEvent.HM_SCROLL_STATE_SCROLL);
+                    scrollEvent.setOffsetY(DPUtil.px2dpF(getContext(), -offset));
+                    scrollEvent.setDy(DPUtil.px2dpF(getContext(), dy));
+                    scrollEvent.setTimestamp(System.currentTimeMillis());
+                    mEventManager.dispatchEvent(ScrollEvent.HM_EVENT_TYPE_SCROLL, scrollEvent);
+                } else {
+                    scrollEvent.setType(ScrollEvent.HM_EVENT_TYPE_SCROLL);
+                    scrollEvent.setState(ScrollEvent.HM_SCROLL_STATE_ENDED);
+                    scrollEvent.setTimestamp(System.currentTimeMillis());
+                    mEventManager.dispatchEvent(ScrollEvent.HM_EVENT_TYPE_SCROLL, scrollEvent);
+                    lastHeaderMovingOffsetY = 0;
+                }
+            }
+        });
 
         scrollView.setOnScrollListener(new OnScrollListener() {
             @Override
